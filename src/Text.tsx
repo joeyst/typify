@@ -1,12 +1,15 @@
 import { KeyboardEvent, useState } from "react";
+import { text } from "stream/consumers";
 
 function GetText() {
   const [typed, setTyped] = useState("");
+  const [iter, setIter] = useState(0);
 
-  const textToType = "abcde"
+  const textToType = "This is a piece of text that you are supposed to type. This is a piece of text that you are supposed to type."
 
   const handleKeyPress = (event: KeyboardEvent) => {
     setTyped(typed + event.key)
+    setIter(iter + getNumMatched(textToType, typed) + getNumIncorrect(textToType, typed))
   }
 
   const handleBackspace = (event: KeyboardEvent) => {
@@ -47,8 +50,10 @@ function GetText() {
     onKeyDown={handleBackspace}
     style={{outline: 0}}
     >
-      <p> Type: {textToType} </p>
+      <p style={{fontSize: 30, textDecorationLine: 'underline'}}>Type</p>
+      <p style={{fontSize: 40}}> {textToType} </p>
       {comparedText(textToType, typed)}
+      <p>{iter}</p> 
     </div>
   )
 
