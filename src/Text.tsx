@@ -1,47 +1,83 @@
 import { KeyboardEvent, useState } from "react";
-import { text } from "stream/consumers";
 
 function GetText() {
-  const [typed, setTyped] = useState("");
-  const [iter, setIter] = useState(0);
+  const [numCorrect, setNumCorrect] = useState(0);
+  const [numIncorrect, setNumIncorrect] = useState(0);
+  const [startTime, setStartTime] = useState(0);
+  const [endTime, setEndTime] = useState(0);
+  const textToType = "This is a piece of text that you're supposed to type."
 
-  const textToType = "This is a piece of text that you are supposed to type. This is a piece of text that you are supposed to type."
+  const setFirstTime = () => {
+    if (startTime === 0) {
+      setStartTime(Date.now())
+    }
+  }
 
   const handleKeyPress = (event: KeyboardEvent) => {
-    setTyped(typed + event.key)
-    setIter(iter + getNumMatched(textToType, typed) + getNumIncorrect(textToType, typed))
+    setFirstTime ()
+    if (numIncorrect === 0) {
+      if (textToType[numCorrect] === event.key) {
+        setNumCorrect(numCorrect + 1)
+      }
+      else {
+        setNumIncorrect(numIncorrect + 1)
+      }
+    }
+    else {
+      setNumIncorrect(numIncorrect + 1)
+    }
   }
 
   const handleBackspace = (event: KeyboardEvent) => {
-    if (typed !== "" && event.key === "Backspace") {
-      setTyped(typed.slice(0,-1))
-      console.log(event.keyCode)
-    }
-  }
-
-  function getNumMatched(desiredText: String, actualText: String): number {
-    let numMatched = 0
-    for (let i = 0; i < desiredText.length; i++) {
-      if (desiredText[i] === actualText[i]) {
-        numMatched += 1
+    if (event.key === "Backspace") {
+      if (numIncorrect === 0) {
+        setNumCorrect(Math.max(numCorrect - 1, 0))
       }
       else {
-        return numMatched
+        setNumIncorrect(numIncorrect - 1)
       }
     }
-    return numMatched
   }
 
-  function getNumIncorrect(desiredText: String, actualText: String) {
-    return (actualText.length - getNumMatched(desiredText, actualText))
+  const finishGame = (numCorrect: number, desiredText: string) => {
+    if (desiredText.length === numCorrect) {
+      if (endTime === 0) {
+        setEndTime(Date.now())
+      }
+      return <p style={{fontSize: 25}}>Finished!</p>
+    }
   }
 
-  function comparedText(desiredText: String, actualText: String) {
-    const numMatched = getNumMatched(desiredText, actualText)
-    const numIncorrect = getNumIncorrect(desiredText, actualText)
-    const textMatched = actualText.slice(0, Math.max(0, numMatched))
-    const textMismatched = actualText.slice(Math.max(numMatched), Math.max(numMatched)+numIncorrect)
-  return <div style={{fontSize: 30}}> <span style={{ background: '#0fff00' }}>{textMatched}</span><span style={{ backgroundColor: '#f06060'}}>{textMismatched}</span> </div>
+  const getSecondsElapsed = () => {
+    if (numCorrect === 0 || startTime === 0) {
+      return 0
+    }
+    else if (endTime !== 0) {
+      return ((endTime - startTime) / 1000)
+    }
+    else {
+      return ((Date.now() - startTime) / 1000)
+    }
+  }
+
+  const getWPM = () => {
+    if (getSecondsElapsed() === 0) {
+      return 0
+    }
+    else {
+      return (getWordsCorrect() * 60 / getSecondsElapsed())
+    }
+  }
+
+  const getWordsCorrect = () => {
+    return (numCorrect / 5)
+  }
+
+  function comparedText(desiredText: String) {
+    const textMatched = desiredText.slice(0, numCorrect)
+    const textMismatched = desiredText.slice(numCorrect, numCorrect+numIncorrect)
+    const textLeftUntouched = desiredText.slice(numCorrect+numIncorrect, desiredText.length)
+  return <div style={{fontSize: 30}}><span style={{ background: '#62f088'}}>{textMatched}</span><span style={{ backgroundColor: '#f03a5e'}}>{textMismatched}</span><span>{textLeftUntouched}</span> </div>
   }
 
   return (
@@ -51,9 +87,11 @@ function GetText() {
     style={{outline: 0}}
     >
       <p style={{fontSize: 30, textDecorationLine: 'underline'}}>Type</p>
-      <p style={{fontSize: 40}}> {textToType} </p>
-      {comparedText(textToType, typed)}
-      <p>{iter}</p> 
+      <p style={{fontSize: 40}}> {comparedText(textToType)} </p>
+      <p style={{fontSize: 20}}>WPM: {getWPM()}</p>
+      <p style={{fontSize: 15}}> Seconds elapsed: {getSecondsElapsed()}</p>
+      {finishGame(numCorrect, textToType)}
+      <p></p>
     </div>
   )
 
