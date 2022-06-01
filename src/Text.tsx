@@ -38,14 +38,11 @@ function GetText() {
     const numIncorrect = getNumIncorrect(desiredText, actualText)
     const textMatched = actualText.slice(0, Math.max(0, numMatched))
     const textMismatched = actualText.slice(Math.max(numMatched), Math.max(numMatched)+numIncorrect)
-    return <div> <p style={{ color: 'green' }}> {textMatched} </p><p style={{ color: 'red' }}> {textMismatched} </p> </div>
+  return <div style={{fontSize: 30}}> <span style={{ background: '#0fff00' }}>{textMatched}</span><span style={{ backgroundColor: '#f06060'}}>{textMismatched}</span> </div>
   }
 
   return (
     <div tabIndex={1}
-    onFocus={(e) => {
-      console.log("clicked")
-    }}
     onKeyPress={handleKeyPress} 
     onKeyDown={handleBackspace}
     style={{outline: 0}}
