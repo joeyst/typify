@@ -1,20 +1,54 @@
-import { KeyboardEvent, useState } from "react";
+import React, { KeyboardEvent, useState, useRef, useEffect, MutableRefObject } from "react";
+import RenderText from './TextRenderer';
+import RenderWPM from './WPM';
+import RenderSecondsElapsed from './SecondsElapsed';
+import RenderType from './RenderType';
+import RenderGameFinished from './RenderGameFinished';
+import RenderDisplayStats from './RenderDisplayStats';
 
-function GetText() {
+function TypingPage(props: any) {
   const [numCorrect, setNumCorrect] = useState(0);
   const [numIncorrect, setNumIncorrect] = useState(0);
+  const [mostCorrect, setMostCorrect] = useState(0);
+
   const [startTime, setStartTime] = useState(0);
   const [endTime, setEndTime] = useState(0);
-  const textToType = "This is a piece of text that you're supposed to type."
+  const [finished, setFinished] = useState(false);
 
-  const setFirstTime = () => {
+  const textToType = props.textToType
+  const textToFocus = useRef<any>(null)
+  let arrOfDates: any[] = []
+  const [recordOfTimes, setRecordOfTimes] = useState<any[]>([])
+
+  const handleKeyPress = (event: KeyboardEvent) => {
+    console.log(recordOfTimes.map( (e,i) => (i+1+"."+e ) ).join(' '));
+    handleStartTime()
+    handleEndTime()
+    handleLetter(event)
+    handleMaxCorrect()
+    handleSetTime(event)
+    if (numCorrect === textToType.length-1) {
+      handleFinish(event)
+    }
+  }
+
+  const handleKeyDown = (event: KeyboardEvent) => {
+    handleBackspace(event)
+  }
+
+  const handleStartTime = () => {
     if (startTime === 0) {
       setStartTime(Date.now())
     }
   }
 
-  const handleKeyPress = (event: KeyboardEvent) => {
-    setFirstTime ()
+  const handleEndTime = () => {
+    if (endTime === 0 && numCorrect === textToType.length-1) {
+      setEndTime(Date.now())
+    }
+  }
+
+  const handleLetter = (event: KeyboardEvent) => {
     if (numIncorrect === 0) {
       if (textToType[numCorrect] === event.key) {
         setNumCorrect(numCorrect + 1)
@@ -25,6 +59,18 @@ function GetText() {
     }
     else {
       setNumIncorrect(numIncorrect + 1)
+    }
+  }
+
+  const handleMaxCorrect = () => {
+    if (numCorrect > mostCorrect) {
+      setMostCorrect(numCorrect)
+    }
+  }
+
+  const handleSetTime = (event: KeyboardEvent) => {
+    if (recordOfTimes[mostCorrect] === undefined) {
+      setRecordOfTimes([...recordOfTimes, Date.now()])
     }
   }
 
@@ -39,62 +85,38 @@ function GetText() {
     }
   }
 
-  const finishGame = (numCorrect: number, desiredText: string) => {
-    if (desiredText.length === numCorrect) {
-      if (endTime === 0) {
-        setEndTime(Date.now())
-      }
-      return <p style={{fontSize: 25}}>Finished!</p>
-    }
+  const handleFinish = (event: KeyboardEvent) => {
+    setFinished(true)
   }
 
-  const getSecondsElapsed = () => {
-    if (numCorrect === 0 || startTime === 0) {
-      return 0
-    }
-    else if (endTime !== 0) {
-      return ((endTime - startTime) / 1000)
-    }
-    else {
-      return ((Date.now() - startTime) / 1000)
-    }
-  }
-
-  const getWPM = () => {
-    if (getSecondsElapsed() === 0) {
-      return 0
-    }
-    else {
-      return (getWordsCorrect() * 60 / getSecondsElapsed())
-    }
-  }
-
-  const getWordsCorrect = () => {
-    return (numCorrect / 5)
-  }
-
-  function comparedText(desiredText: String) {
-    const textMatched = desiredText.slice(0, numCorrect)
-    const textMismatched = desiredText.slice(numCorrect, numCorrect+numIncorrect)
-    const textLeftUntouched = desiredText.slice(numCorrect+numIncorrect, desiredText.length)
-  return <div style={{fontSize: 30}}><span style={{ background: '#62f088'}}>{textMatched}</span><span style={{ backgroundColor: '#f03a5e'}}>{textMismatched}</span><span>{textLeftUntouched}</span> </div>
+  const resetState = () => {
+    setNumCorrect(0)
+    setNumIncorrect(0)
+    setStartTime(0)
+    setEndTime(0)
+    setFinished(false)
+    setRecordOfTimes([])
+    textToFocus.current.focus()
   }
 
   return (
-    <div tabIndex={1}
-    onKeyPress={handleKeyPress} 
-    onKeyDown={handleBackspace}
-    style={{outline: 0}}
-    >
-      <p style={{fontSize: 30, textDecorationLine: 'underline'}}>Type</p>
-      <p style={{fontSize: 40}}> {comparedText(textToType)} </p>
-      <p style={{fontSize: 20}}>WPM: {getWPM()}</p>
-      <p style={{fontSize: 15}}> Seconds elapsed: {getSecondsElapsed()}</p>
-      {finishGame(numCorrect, textToType)}
-      <p></p>
+    <div>
+      <div tabIndex={1}
+      onKeyPress={handleKeyPress} 
+      onKeyDown={handleKeyDown}
+      style={{outline: 0}}
+      ref={textToFocus}>
+        <RenderType />
+        <RenderText numCorrect={numCorrect} numIncorrect={numIncorrect} desiredText={textToType} />
+          <RenderWPM numCorrect={numCorrect} startTime={startTime} endTime={endTime} />
+          <RenderSecondsElapsed startTime={startTime} endTime={endTime}/>
+        <RenderGameFinished finished={finished}/>
+        <RenderDisplayStats finished={finished} stats={recordOfTimes} textToType={textToType} />
+      </div>
+      <button onClick={resetState}>Reset</button>
     </div>
   )
 
 }
 
-export default GetText;
+export default TypingPage;
