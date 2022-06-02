@@ -7,74 +7,62 @@ import RenderGameFinished from './RenderGameFinished';
 import RenderDisplayStats from './RenderDisplayStats';
 
 function TypingPage(props: any) {
-  const [numCorrect, setNumCorrect] = useState(0);
-  const [numIncorrect, setNumIncorrect] = useState(0);
+  const [numCorrect, setNumCorrect] = useState<number>(0);
+  const [numIncorrect, setNumIncorrect] = useState<number>(0);
   const [mostCorrect, setMostCorrect] = useState(0);
 
-  const [startTime, setStartTime] = useState(0);
-  const [endTime, setEndTime] = useState(0);
+  const [startTime, setStartTime] = useState<number | undefined>(undefined);
+  const [endTime, setEndTime] = useState<number | undefined>(undefined);
   const [finished, setFinished] = useState(false);
 
-  const textToType = props.textToType
+  const textToType : string = props.textToType
   const textToFocus = useRef<any>(null)
-  let arrOfDates: any[] = []
   const [recordOfTimes, setRecordOfTimes] = useState<any[]>([])
 
   const handleKeyPress = (event: KeyboardEvent) => {
-    console.log(recordOfTimes.map( (e,i) => (i+1+"."+e ) ).join(' '));
-    handleStartTime()
-    handleEndTime()
-    handleLetter(event)
-    handleMaxCorrect()
-    handleSetTime(event)
-    if (numCorrect === textToType.length-1) {
-      handleFinish(event)
-    }
+    handleNumCorrect(event)
+    setStartIfStarted()
+    setFinishedIfFinished()
+    handleSetTime()
   }
 
-  const handleKeyDown = (event: KeyboardEvent) => {
-    handleBackspace(event)
-  }
-
-  const handleStartTime = () => {
-    if (startTime === 0) {
-      setStartTime(Date.now())
-    }
-  }
-
-  const handleEndTime = () => {
-    if (endTime === 0 && numCorrect === textToType.length-1) {
+  const setFinishedIfFinished = () => {
+    if (numCorrect === textToType.length && finished === false) {
+      setFinished(true)
       setEndTime(Date.now())
     }
   }
 
-  const handleLetter = (event: KeyboardEvent) => {
-    if (numIncorrect === 0) {
-      if (textToType[numCorrect] === event.key) {
-        setNumCorrect(numCorrect + 1)
-      }
-      else {
-        setNumIncorrect(numIncorrect + 1)
-      }
-    }
-    else {
-      setNumIncorrect(numIncorrect + 1)
+  const setStartIfStarted = () => {
+    if (startTime === undefined) {
+      setStartTime(Date.now())
     }
   }
 
-  const handleMaxCorrect = () => {
-    if (numCorrect > mostCorrect) {
-      setMostCorrect(numCorrect)
-    }
-  }
-
-  const handleSetTime = (event: KeyboardEvent) => {
+  const handleSetTime = () => {
     if (recordOfTimes[mostCorrect] === undefined) {
       setRecordOfTimes([...recordOfTimes, Date.now()])
     }
   }
 
-  const handleBackspace = (event: KeyboardEvent) => {
+  const handleNumCorrect = (event: KeyboardEvent) => {
+    if (finished === false) {
+      if (numIncorrect > 0) { 
+        setNumIncorrect(numIncorrect+1)
+      }
+      else if (event.key == textToType[numCorrect]) {
+        setNumCorrect(numCorrect+1)
+      }
+      else {
+        setNumIncorrect(numIncorrect+1)
+      }
+    }
+    if (numCorrect > mostCorrect) {
+      setMostCorrect(numCorrect)
+    }
+  }
+
+  const handleKeyDown = (event: KeyboardEvent) => {
     if (event.key === "Backspace") {
       if (numIncorrect === 0) {
         setNumCorrect(Math.max(numCorrect - 1, 0))
@@ -83,10 +71,6 @@ function TypingPage(props: any) {
         setNumIncorrect(numIncorrect - 1)
       }
     }
-  }
-
-  const handleFinish = (event: KeyboardEvent) => {
-    setFinished(true)
   }
 
   const resetState = () => {
