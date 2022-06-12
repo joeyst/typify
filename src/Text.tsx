@@ -11,64 +11,81 @@ function TypingPage(props: any) {
   const [numIncorrect, setNumIncorrect] = useState<number>(0);
   const [mostCorrect, setMostCorrect] = useState(0);
 
+  const [started, setStarted] = useState<boolean>(false);
   const [startTime, setStartTime] = useState<number | undefined>(undefined);
+  const [finished, setFinished] = useState<boolean>(false);
   const [endTime, setEndTime] = useState<number | undefined>(undefined);
-  const [finished, setFinished] = useState(false);
 
   const textToType : string = props.textToType
   const textToFocus = useRef<any>(null)
   const [recordOfTimes, setRecordOfTimes] = useState<any[]>([])
 
   const handleKeyPress = (event: KeyboardEvent) => {
-    handleNumCorrect(event)
-    setStartIfStarted()
-    setFinishedIfFinished()
-    handleSetTime()
-  }
-
-  const setFinishedIfFinished = () => {
-    if (numCorrect === textToType.length && finished === false) {
-      setFinished(true)
-      setEndTime(Date.now())
-    }
-  }
-
-  const setStartIfStarted = () => {
-    if (startTime === undefined) {
-      setStartTime(Date.now())
-    }
-  }
-
-  const handleSetTime = () => {
-    if (recordOfTimes[mostCorrect] === undefined) {
-      setRecordOfTimes([...recordOfTimes, Date.now()])
-    }
-  }
-
-  const handleNumCorrect = (event: KeyboardEvent) => {
     if (finished === false) {
-      if (numIncorrect > 0) { 
-        setNumIncorrect(numIncorrect+1)
-      }
-      else if (event.key == textToType[numCorrect]) {
+      setStartIfStarted()
+      adjustNumCorrect(event)
+      handleSetTime()
+      setFinishedIfFinished(event)
+    }
+  }
+
+  const adjustNumCorrect = (event: KeyboardEvent) => {
+    if (numIncorrect > 0) {
+      setNumIncorrect(numIncorrect+1)
+    }
+    else {
+      if (textToType[numCorrect] === event.key) {
         setNumCorrect(numCorrect+1)
       }
       else {
         setNumIncorrect(numIncorrect+1)
       }
     }
-    if (numCorrect > mostCorrect) {
-      setMostCorrect(numCorrect)
+    if (numCorrect > mostCorrect) {setMostCorrect(numCorrect)}
+  }
+
+  const secondsElapsed = () => {
+    if (started === false) {
+      return 0
+    }
+    else if (finished === false && startTime !== undefined) {
+      return ((Date.now() - startTime)/1000)
+    }
+    else if (startTime !== undefined && endTime !== undefined) {
+      return ((endTime - startTime)/1000)
+    }
+  }
+  
+  const setStartIfStarted = () => {
+    if (started === false) {
+      setStarted(true)
+      setStartTime(Date.now())
+    }
+  }
+
+  const setFinishedIfFinished = (event: KeyboardEvent) => {
+    if (numCorrect === textToType.length-1 && numIncorrect === 0 && finished === false && event.key === textToType[numCorrect]) {
+      setFinished(true)
+      setEndTime(Date.now())
+      setRecordOfTimes([...recordOfTimes, secondsElapsed(), 0, 0, 0, 0, 0, 0, 0])
+    }
+  }
+
+  const handleSetTime = () => {
+    if (recordOfTimes[mostCorrect] === undefined) {
+      setRecordOfTimes([...recordOfTimes, secondsElapsed()])
     }
   }
 
   const handleKeyDown = (event: KeyboardEvent) => {
-    if (event.key === "Backspace") {
-      if (numIncorrect === 0) {
-        setNumCorrect(Math.max(numCorrect - 1, 0))
-      }
-      else {
-        setNumIncorrect(numIncorrect - 1)
+    if (finished === false) {
+      if (event.key === "Backspace") {
+        if (numIncorrect === 0) {
+          setNumCorrect(Math.max(numCorrect - 1, 0))
+        }
+        else {
+          setNumIncorrect(numIncorrect - 1)
+        }
       }
     }
   }
@@ -76,8 +93,10 @@ function TypingPage(props: any) {
   const resetState = () => {
     setNumCorrect(0)
     setNumIncorrect(0)
-    setStartTime(0)
-    setEndTime(0)
+    setMostCorrect(0)
+    setStartTime(undefined)
+    setEndTime(undefined)
+    setStarted(false)
     setFinished(false)
     setRecordOfTimes([])
     textToFocus.current.focus()
@@ -92,8 +111,8 @@ function TypingPage(props: any) {
       ref={textToFocus}>
         <RenderType />
         <RenderText numCorrect={numCorrect} numIncorrect={numIncorrect} desiredText={textToType} />
-          <RenderWPM numCorrect={numCorrect} startTime={startTime} endTime={endTime} />
-          <RenderSecondsElapsed startTime={startTime} endTime={endTime}/>
+          <RenderWPM numCorrect={numCorrect} secondsElapsed={secondsElapsed()} />
+          <RenderSecondsElapsed secondsElapsed={secondsElapsed()}/>
         <RenderGameFinished finished={finished}/>
         <RenderDisplayStats finished={finished} stats={recordOfTimes} textToType={textToType} />
       </div>

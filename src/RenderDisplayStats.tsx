@@ -2,16 +2,6 @@ import React from 'react';
 import { useState} from 'react';
 
 function RenderDisplayStats(props: any) {
-  const [firstIndexOfSlowest, setFirstIndexOfSlowest] = useState(-1)
-
-  const normalizeTime = (arrOfDates: number[]) => {
-    let arrOfTimes : number[] = []
-    let firstDate = arrOfDates[0]
-    for (let i = 0; i < arrOfDates.length; i++) {
-      arrOfTimes.push(arrOfDates[i] - firstDate)
-    }
-    return (arrOfDates.map(val => ((val - arrOfDates[0])/1000)))
-  }
 
   const getFiveLetterAverage = (arrOfTimes: number[]) => {
     if (arrOfTimes.length < 5) {
@@ -19,7 +9,7 @@ function RenderDisplayStats(props: any) {
     }
     else {
       let arrOfAverages : number[] = []
-      for (let i = 0; i < arrOfTimes.length-5; i++) {
+      for (let i = 0; i < arrOfTimes.length-4; i++) {
         arrOfAverages = [...arrOfAverages, (arrOfTimes.slice(i, i+5)).reduce((partialSum, a) => partialSum + a, 0)]
       }
       return arrOfAverages
@@ -35,8 +25,7 @@ function RenderDisplayStats(props: any) {
   }
 
   const calculatedAvg = (arrOfDates: number[]) => {
-    let normalizedTimes = normalizeTime(arrOfDates)
-    let differencesInTime = findDifference(normalizedTimes)
+    let differencesInTime = findDifference(arrOfDates)
     return getFiveLetterAverage(differencesInTime)
   }
 
@@ -45,6 +34,7 @@ function RenderDisplayStats(props: any) {
     let indexOfSlowest = -1
     let slowestTime = -Infinity
     for (let i = 0; i < avgTimes.length; i++) {
+      
       if (avgTimes[i] > slowestTime) {
         slowestTime = avgTimes[i]
         indexOfSlowest = i
