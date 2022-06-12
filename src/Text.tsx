@@ -22,6 +22,7 @@ function TypingPage(props: any) {
 
   const handleKeyPress = (event: KeyboardEvent) => {
     if (finished === false) {
+      event.preventDefault()
       setStartIfStarted()
       adjustNumCorrect(event)
       handleSetTime()
